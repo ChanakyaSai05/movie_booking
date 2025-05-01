@@ -6,6 +6,9 @@ import { Provider } from "react-redux";
 import store from "./redux/store";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Admin from "./pages/Admin";
+import Forget from "./pages/User/ForgetPassword";
+import Reset from "./pages/User/ResetPassword";
+import Partner from "./pages/Partner";
 
 function App() {
   return (
@@ -23,6 +26,16 @@ function App() {
                 </ProtectedRoute>
               }
             ></Route>
+            <Route
+              path="/partner"
+              element={
+                <ProtectedRoute>
+                  <Partner />
+                </ProtectedRoute>
+              }
+            ></Route>
+            <Route path="/forget" element={<Forget />} />
+            <Route path="/reset/:email" element={<Reset />} />
           </Routes>
         </BrowserRouter>
       </div>
