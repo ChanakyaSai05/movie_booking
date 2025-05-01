@@ -2,7 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const connectDB = require("./config/db");
-// const userRoutes = require("./routes/user.routes");
+const userRoutes = require("./routes/userRoutes");
 const errorHandler = require("./middlewares/errorHandler");
 
 dotenv.config();
@@ -16,7 +16,7 @@ app.use(express.json());
 connectDB();
 
 // Routes
-// app.use("/api/users", userRoutes);
+app.use("/api/users", userRoutes);
 
 // Error Handler
 app.use(errorHandler);
