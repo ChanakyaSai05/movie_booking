@@ -1,7 +1,7 @@
 import React from "react";
 import { Form, Button, Input, message, Radio } from "antd";
 import { Link } from "react-router-dom";
-import { RegisterUser } from "../../api/users";
+import { RegisterUser } from "../api/users";
 
 function Register() {
   const onFinish = async (values) => {

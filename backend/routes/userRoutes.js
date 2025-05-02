@@ -49,10 +49,10 @@ userRouter.post("/login", async (req, res) => {
 });
 
 userRouter.get("/get-current-user", authMiddleware, async (req, res) => {
-  const user = await userModel.findById(req.body.userId).select("-password");
+  const user = await userModel.findById(req.user.userId).select("-password");
   res.send({
     success: true,
-    message: "You are authorized to go to the priotected route",
+    message: "You are authorized to go to the protected route",
     data: user,
   });
 });

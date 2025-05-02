@@ -1,7 +1,7 @@
 import React from "react";
 import { Form, Button, Input, message } from "antd";
 import { Link, useNavigate } from "react-router-dom";
-import { LoginUser } from "../../api/users";
+import { LoginUser } from "../api/users";
 
 function Login() {
   const navigate = useNavigate();

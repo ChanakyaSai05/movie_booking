@@ -2,14 +2,24 @@ const jwt = require("jsonwebtoken");
 
 const auth = (req, res, next) => {
   try {
-    console.log("auth middleware");
-    console.log("headers", req.headers.authorization); // Bearer asdas123123.asdasd123.asgfad124
-    const token = req.headers.authorization.split(" ")[1];
-    console.log("token", token);
+    // console.log("auth middleware");
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ success: false, message: "Token missing or malformed" });
+    }
+
+    const token = authHeader.split(" ")[1];
     const verifiedToken = jwt.verify(token, process.env.JWT_SECRET);
-    req.body.userId = verifiedToken.userId;
+    // console.log("verifiedToken", verifiedToken);
+
+    if (!verifiedToken.userId) {
+      return res.status(401).json({ success: false, message: "Token does not contain userId" });
+    }
+
+    req.user = verifiedToken; // better than modifying req.body
     next();
   } catch (err) {
+    console.error("JWT verification error:", err);
     res.status(401).json({ success: false, message: "Token invalid" });
   }
 };
