@@ -3,10 +3,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { HideLoading, ShowLoading } from "../../redux/loaderSlice";
 import { getShowById } from "../../api/shows";
 import { useNavigate, useParams } from "react-router-dom";
-import { message, Card, Row, Col, Button } from "antd";
+import { Card, Button } from "antd";
 import moment from "moment";
 import StripeCheckout from "react-stripe-checkout"; // Stripe Checkout
 import { bookShow, makePayment } from "../../api/booking";
+import toast from "react-hot-toast";
+import { showErrorToasts, extractErrorFromResponse } from "../../utils/errorHandler";
 
 const BookShow = () => {
   // Redux state and hooks
@@ -16,7 +18,6 @@ const BookShow = () => {
   const [selectedSeats, setSelectedSeats] = useState([]); // State for managing selected seats
   const params = useParams(); // Extracting URL parameters
   const navigate = useNavigate(); // Navigation hook
-
   // Function to fetch show data by ID
   const getData = async () => {
     try {
@@ -24,13 +25,16 @@ const BookShow = () => {
       const response = await getShowById({ showId: params.id }); // API call to fetch show details
       if (response.success) {
         setShow(response.data); // Setting state with fetched show data
-        console.log(response.data); // Logging show data to console
-      } else {
-        message.error(response.message); // Displaying error message if API call fails
-      }
-      dispatch(HideLoading()); // Dispatching action to hide loading state
+        console.log(response.data); // Logging show data to console      } else {
+        if (response.errors && Array.isArray(response.errors)) {
+          showErrorToasts(response.errors);
+        } else {
+          showErrorToasts(response.message || "Failed to load show details");
+        }
+      }dispatch(HideLoading()); // Dispatching action to hide loading state
     } catch (err) {
-      message.error(err.message); // Handling errors from API call
+      const extractedErrors = extractErrorFromResponse(err);
+      showErrorToasts(extractedErrors);
       dispatch(HideLoading()); // Hiding loading state on error
     }
   };
@@ -39,43 +43,49 @@ const BookShow = () => {
   const getSeats = () => {
     let columns = 12; // Number of columns for seating arrangement
     let totalSeats = show.totalSeats;
-    let rows = Math.ceil(totalSeats / columns);
-
-    return (
-      <div className="d-flex flex-column align-items-center">
-        <div className="w-100 max-width-600 mx-auto mb-25px">
-          <p className="text-center mb-10px">
-            Screen this side, you will be watching in this direction
-          </p>
-          <div className="screen-div">
-            {/* Placeholder for screen display */}
+    let rows = Math.ceil(totalSeats / columns);    return (
+      <div className="seat-layout-container">
+        <div className="screen-area">
+          <div className="screen-label">
+            Screen this side - you will be watching in this direction
           </div>
+          <div className="screen-display"></div>
         </div>
-        <ul
-          className="seat-ul justify-content-center"
-          style={{ marginLeft: "30%" }}
-        >
-          {Array.from(Array(rows).keys()).map((row) =>
-            // Mapping rows
-            Array.from(Array(columns).keys()).map((column) => {
-              let seatNumber = row * columns + column + 1; // Calculating seat number
-
-              let seatClass = "seat-btn"; // Default class for seat button
-              if (selectedSeats.includes(seatNumber)) {
-                seatClass += " selected"; // Adding 'selected' class if seat is selected
-              }
-              if (show.bookedSeats.includes(seatNumber)) {
-                seatClass += " booked"; // Adding 'booked' class if seat is already booked
-              }
-              if (seatNumber <= totalSeats) {
-                // Rendering seat button if seat number is valid
-                return (
-                  <li key={seatNumber}>
-                    {/* Key added for React list rendering optimization */}
+        
+        <div className="seating-area">
+          <div className="seat-legend">
+            <div className="legend-item">
+              <div className="legend-seat available"></div>
+              <span>Available</span>
+            </div>
+            <div className="legend-item">
+              <div className="legend-seat selected"></div>
+              <span>Selected</span>
+            </div>
+            <div className="legend-item">
+              <div className="legend-seat booked"></div>
+              <span>Booked</span>
+            </div>
+          </div>
+            <div className="seats-grid">
+            {Array.from(Array(rows).keys()).map((row) =>
+              Array.from(Array(columns).keys()).map((column) => {
+                let seatNumber = row * columns + column + 1;
+                let seatClass = "seat-btn";
+                
+                if (selectedSeats.includes(seatNumber)) {
+                  seatClass += " selected";
+                }
+                if (show.bookedSeats.includes(seatNumber)) {
+                  seatClass += " booked";
+                }
+                
+                if (seatNumber <= totalSeats) {
+                  return (
                     <button
+                      key={seatNumber}
                       className={seatClass}
                       onClick={() => {
-                        // Function to handle seat selection/deselection
                         if (selectedSeats.includes(seatNumber)) {
                           setSelectedSeats(
                             selectedSeats.filter(
@@ -89,52 +99,60 @@ const BookShow = () => {
                     >
                       {seatNumber}
                     </button>
-                  </li>
-                );
-              }
-              return null;
-            })
-          )}
-        </ul>
-        <div className="d-flex bottom-card justify-content-between w-100 max-width-600 mx-auto mb-25px mt-3">
-          <div className="flex-1">
-            Selected Seats: <span>{selectedSeats.join(", ")}</span>
-          </div>
-          <div className="flex-shrink-0 ms-3">
-            Total Price:{" "}
-            <span>Rs. {selectedSeats.length * show.ticketPrice}</span>
+                  );
+                }
+                return null;
+              })
+            )}
           </div>
         </div>
+        
+        {selectedSeats.length > 0 && (
+          <div className="booking-summary">
+            <div className="summary-content">
+              <div className="selected-info">
+                <span className="summary-label">Selected Seats:</span>
+                <span className="summary-value">{selectedSeats.join(", ")}</span>
+              </div>
+              <div className="price-info">
+                <span className="summary-label">Total Price:</span>
+                <span className="summary-value total-price">
+                  ₹{selectedSeats.length * show.ticketPrice}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };  // Effect hook to fetch data on component mount
   useEffect(() => {
     getData();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  
-  const onToken = async (token) => {
+    const onToken = async (token) => {
     console.log(token);
     try {
       dispatch(ShowLoading());
       const response = await makePayment(
         token,
         selectedSeats.length * show.ticketPrice * 100
-      );
-      if (response.success) {
-        message.success(response.message);
+      );      if (response.success) {
+        toast.success(response.message);
         // Use the transactionId from the PaymentIntent response
-        book(response.data.transactionId);
-      } else {
-        message.error(response.message);
+        book(response.data.transactionId);      } else {
+        if (response.errors && Array.isArray(response.errors)) {
+          showErrorToasts(response.errors);
+        } else {
+          showErrorToasts(response.message || "Payment failed");
+        }
       }
-      dispatch(HideLoading());
-    } catch (err) {
+      dispatch(HideLoading());    } catch (err) {
       console.log(err);
-      message.error(err.message || "Payment failed. Please try again.");
+      const extractedErrors = extractErrorFromResponse(err);
+      showErrorToasts(extractedErrors);
       dispatch(HideLoading());
     }
   };
-
   const book = async (transactionId) => {
     try {
       const response = await bookShow({
@@ -145,76 +163,86 @@ const BookShow = () => {
         totalPrice: selectedSeats.length * show.ticketPrice * 100, // Add total price for validation
       });
       if (response.success) {
-        message.success(response.message);
-        navigate("/profile");
-      } else {
-        message.error(response.message);
+        toast.success(response.message);
+        navigate("/profile");      } else {
+        if (response.errors && Array.isArray(response.errors)) {
+          showErrorToasts(response.errors);
+        } else {
+          showErrorToasts(response.message || "Booking failed");
+        }
       }
       dispatch(HideLoading());
     } catch (err) {
       console.log(err);
-      message.error(err.message);
+      const extractedErrors = extractErrorFromResponse(err);
+      showErrorToasts(extractedErrors);
       dispatch(HideLoading());
     }
   };
-
-  // JSX rendering
   return (
-    <>
+    <div className="book-show-container">
       {show && (
-        <Row gutter={24}>
-          <Col span={24}>
-            <Card
-              title={
-                <div className="movie-title-details">
-                  <h1>{show.movie.title}</h1>
-                  <p>
-                    Theatre: {show.theatre.name}, {show.theatre.address}
-                  </p>
+        <div className="booking-layout">
+          {/* Movie and Show Info Header */}
+          <div className="show-info-header">
+            <div className="movie-details-section">
+              <h1 className="movie-title-main">{show.movie.title}</h1>
+              <p className="theatre-info">
+                <strong>{show.theatre.name}</strong> • {show.theatre.address}
+              </p>
+            </div>
+            
+            <div className="show-timing-section">
+              <div className="timing-card">
+                <div className="timing-item">
+                  <span className="timing-label">Show:</span>
+                  <span className="timing-value">{show.name}</span>
                 </div>
-              }
-              extra={
-                <div className="show-name py-3">
-                  <h3>
-                    <span>Show Name:</span> {show.name}
-                  </h3>
-                  <h3>
-                    <span>Date & Time: </span>
+                <div className="timing-item">
+                  <span className="timing-label">Date & Time:</span>
+                  <span className="timing-value">
                     {moment(show.date).format("MMM Do YYYY")} at{" "}
                     {moment(show.time, "HH:mm").format("hh:mm A")}
-                  </h3>
-                  <h3>
-                    <span>Ticket Price:</span> Rs. {show.ticketPrice}/-
-                  </h3>
-                  <h3>
-                    <span>Total Seats:</span> {show.totalSeats}
-                    <span> &nbsp;|&nbsp; Available Seats:</span>{" "}
-                    {show.totalSeats - show.bookedSeats.length}
-                  </h3>
+                  </span>
                 </div>
-              }
-              style={{ width: "100%" }}
-            >
-              {getSeats()} {/* Rendering dynamic seat layout */}
+                <div className="timing-item">
+                  <span className="timing-label">Ticket Price:</span>
+                  <span className="timing-value price">₹{show.ticketPrice}</span>
+                </div>
+                <div className="timing-item">
+                  <span className="timing-label">Available:</span>
+                  <span className="timing-value">
+                    {show.totalSeats - show.bookedSeats.length} of {show.totalSeats} seats
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Seat Selection Section */}
+          <div className="seat-selection-section">
+            <Card className="seat-selection-card">
+              {getSeats()}
+              
               {selectedSeats.length > 0 && (
-                <StripeCheckout
-                  token={onToken}
-                  billingAddress
-                  amount={selectedSeats.length * show.ticketPrice * 100}
-                  stripeKey={process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY}
-                >
-                  <div className="max-width-600 mx-auto">
-                    <Button type="primary" shape="round" size="large" block>
-                      Pay Now
+                <div className="payment-section">
+                  <StripeCheckout
+                    token={onToken}
+                    billingAddress
+                    amount={selectedSeats.length * show.ticketPrice * 100}
+                    stripeKey={process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY}
+                  >
+                    <Button type="primary" className="pay-now-btn" size="large" block>
+                      Pay ₹{selectedSeats.length * show.ticketPrice} Now
                     </Button>
-                  </div>
-                </StripeCheckout>
+                  </StripeCheckout>
+                </div>
               )}
             </Card>
-          </Col>
-        </Row>
+          </div>
+        </div>
       )}
-    </>
+    </div>
   );
 };
 

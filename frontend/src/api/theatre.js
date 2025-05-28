@@ -49,9 +49,10 @@ export const updateTheatre = async (payload) => {
 };
 
 export const deleteTheatre = async (payload) => {
+  console.log("deleting theatre", payload);
   try {
     const response = await axiosInstance.delete(
-      `/api/theatres/delete-theatre/${payload}`
+      `/api/theatres/delete-theatre/${payload?.theatreId}`
     );
     return response.data;
   } catch (err) {

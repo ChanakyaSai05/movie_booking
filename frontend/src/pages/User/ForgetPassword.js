@@ -1,75 +1,77 @@
 import React, { useEffect } from "react";
 import { Button, Form, Input } from "antd";
 import { Link, useNavigate } from "react-router-dom";
-import { ForgetPassword, LoginUser } from "../../api/users";
-import { message } from "antd";
+import { ForgetPassword } from "../../api/users";
+import toast from "react-hot-toast";
+import { showErrorToasts, extractErrorFromResponse } from "../../utils/errorHandler";
 
 function Forget() {
-  const navigate = useNavigate();
-
-  const onFinish = async (values) => {
+  const navigate = useNavigate();  const onFinish = async (values) => {
     console.log(values);
     try {
       const response = await ForgetPassword(values);
       if (response.status === "success") {
-        message.success(response.message);
-        alert("OTP sent to your email");
-        // window.location.href = "/reset";
+        toast.success(response.message);
+        toast.success("OTP sent to your email");
         navigate(`/reset/${encodeURIComponent(values.email)}`);
       } else {
-        message.error(response.message);
+        // Handle validation errors or other backend errors
+        if (response.errors && Array.isArray(response.errors)) {
+          showErrorToasts(response.errors);
+        } else {
+          showErrorToasts(response.message || "Failed to send reset link");
+        }
       }
     } catch (error) {
-      message.error(error.message);
+      // Extract and show detailed error messages
+      const extractedErrors = extractErrorFromResponse(error);
+      showErrorToasts(extractedErrors);
     }
-  };
-  useEffect(() => {
+  };useEffect(() => {
     if (localStorage.getItem("token")) {
       navigate("/");
     }
-  }, []);
-  return (
+  }, [navigate]);  return (
     <>
-      <header className="App-header">
-        <main className="main-area mw-500 text-center px-3">
-          <section className="left-section">
-            <h1>Forget Password</h1>
-          </section>
-          <section className="right-section">
-            <Form layout="vertical" onFinish={onFinish}>
-              <Form.Item
-                label="Email"
-                htmlFor="email"
-                name="email"
-                className="d-block"
-                rules={[{ required: true, message: "Email is required" }]}
-              >
-                <Input
-                  id="email"
-                  type="text"
-                  placeholder="Enter your Email"
-                ></Input>
-              </Form.Item>
+      <main className="App-header">
+        <h1>Welcome to BookMyShow</h1>
+        <section className="auth-form-container mw-500 px-3">
+          <Form layout="vertical" onFinish={onFinish}>
+            <Form.Item
+              label="Email"
+              name="email"
+              rules={[
+                { required: true, message: "Email is required" },
+                { type: "email", message: "Please enter a valid email" }
+              ]}
+            >
+              <Input
+                type="email"
+                placeholder="Enter your email address"
+                size="large"
+              />
+            </Form.Item>
 
-              <Form.Item className="d-block">
-                <Button
-                  type="primary"
-                  block
-                  htmlType="submit"
-                  style={{ fontSize: "1rem", fontWeight: "600" }}
-                >
-                  SEND OTP
-                </Button>
-              </Form.Item>
-            </Form>
-            <div>
+            <Form.Item>
+              <Button
+                type="primary"
+                htmlType="submit"
+                size="large"
+                block
+                style={{ fontSize: "1rem", fontWeight: "600" }}
+              >
+                Send Reset Link
+              </Button>
+            </Form.Item>
+            
+            <div className="auth-links">
               <p>
-                Existing User? <Link to="/login">Login Here</Link>
+                Remember your password? <Link to="/login">Login Here</Link>
               </p>
             </div>
-          </section>
-        </main>
-      </header>
+          </Form>
+        </section>
+      </main>
     </>
   );
 }

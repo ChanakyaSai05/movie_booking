@@ -1,9 +1,11 @@
-import { Col, Modal, Row, Form, Input, Select, Button, message } from "antd";
+import { Col, Modal, Row, Form, Input, Select, Button } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import { ShowLoading, HideLoading } from "../../redux/loaderSlice";
 import { useDispatch } from "react-redux";
 import { addMovie, updateMovie } from "../../api/movie";
 import moment from "moment";
+import toast from "react-hot-toast";
+import { showErrorToasts, extractErrorFromResponse } from "../../utils/errorHandler";
 
 const MovieForm = ({
   isModalOpen,
@@ -19,9 +21,7 @@ const MovieForm = ({
     selectedMovie.releaseDate = moment(selectedMovie.releaseDate).format(
       "YYYY-MM-DD"
     );
-  }
-
-  const onFinish = async (values) => {
+  }  const onFinish = async (values) => {
     try {
       dispatch(ShowLoading());
       let response = null;
@@ -32,16 +32,22 @@ const MovieForm = ({
       }
       if (response.success) {
         getData();
-        message.success(response.message);
-        setIsModalOpen(false);
-      } else {
-        message.error(response.message);
+        toast.success(response.message);
+        setIsModalOpen(false);      } else {
+        // Handle validation errors or other backend errors
+        if (response.errors && Array.isArray(response.errors)) {
+          showErrorToasts(response.errors);
+        } else {
+          showErrorToasts(response.message || "Operation failed");
+        }
       }
       setSelectedMovie(null);
       dispatch(HideLoading());
     } catch (err) {
       dispatch(HideLoading());
-      message.error(err.message);
+      // Extract and show detailed error messages
+      const extractedErrors = extractErrorFromResponse(err);
+      showErrorToasts(extractedErrors);
     }
   };
 
@@ -49,15 +55,15 @@ const MovieForm = ({
     setIsModalOpen(false);
     setSelectedMovie(null);
   };
-
   return (
     <Modal
       centered
-      title={formType === "add" ? "Add Movie" : "Edit Movie"}
+      title={formType === "add" ? "Add New Movie" : "Edit Movie"}
       open={isModalOpen}
       onCancel={handleCancel}
       width={800}
       footer={null}
+      className="modern-modal"
     >
       <Form layout="vertical" initialValues={selectedMovie} onFinish={onFinish}>
         <Row gutter={{ xs: 6, sm: 10, md: 12, lg: 16 }}>
@@ -167,17 +173,22 @@ const MovieForm = ({
               </Col>
             </Row>
           </Col>
-        </Row>
-        <Form.Item>
+        </Row>        <Form.Item>
           <Button
             block
             type="primary"
             htmlType="submit"
-            style={{ fontSize: "1rem", fontWeight: "600" }}
+            className="submit-button"
+            size="large"
           >
-            Submit the Data
+            {formType === "add" ? "Add Movie" : "Update Movie"}
           </Button>
-          <Button className="mt-3" block onClick={handleCancel}>
+          <Button 
+            className="mt-3 cancel-button" 
+            block 
+            onClick={handleCancel}
+            size="large"
+          >
             Cancel
           </Button>
         </Form.Item>

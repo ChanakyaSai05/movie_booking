@@ -29,7 +29,11 @@ app.use(cors(corsOptions));
 
 // Other middleware
 app.use(express.json({ limit: '10mb' }));
-app.use(apiLimiter); // Apply rate limiting to all routes
+
+// Apply rate limiting conditionally based on environment
+if (process.env.NODE_ENV === 'production') {
+  app.use(apiLimiter); // Apply rate limiting to all routes only in production
+}
 
 // Connect to DB
 connectDB();

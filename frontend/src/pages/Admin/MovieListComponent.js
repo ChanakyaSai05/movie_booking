@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Table, Button } from "antd";
 import MovieForm from "./MovieForm";
 import { HideLoading, ShowLoading } from "../../redux/loaderSlice";
@@ -9,46 +9,22 @@ import DeleteMovieModal from "./DeleteMovieModal";
 import moment from "moment";
 
 function MovieList() {
-  const fakeMovies = [
-    {
-      key: "1",
-      poster: "Image1",
-      description: "Wolverine Vs Deadpool",
-      duration: 120,
-      genre: "Action",
-      language: "English",
-      releaseDate: "2024-08-01",
-      name: "Wolverine Vs Deadpool",
-    },
-    {
-      key: "2",
-      poster: "Image2",
-      description: "Wolverine Vs Deadpool",
-      duration: 120,
-      genre: "Action",
-      language: "English",
-      releaseDate: "2024-08-01",
-      name: "Wolverine Vs Deadpool 2",
-    },
-  ];
   const tableHeadings = [
     {
       title: "Poster",
-      dataIndex: "poster",
-      render: (text, data) => {
+      dataIndex: "poster",      render: (text, data) => {
         return (
           <img
-            height="100px"
-            style={{ objectFit: "cover" }}
+            className="table-movie-poster"
             src={data.poster}
-            width={"100px"}
+            alt="Movie Poster"
           />
         );
       },
     },
     {
       title: "Movie Name",
-      dataIndex: "name",
+      dataIndex: "title",
     },
     {
       title: "Description",
@@ -78,10 +54,10 @@ function MovieList() {
     },
     {
       title: "Action",
-      render: (text, data) => {
-        return (
-          <div>
+      render: (text, data) => {        return (
+          <div className="table-actions">
             <Button
+              className="action-btn edit-btn"
               onClick={() => {
                 setIsModalOpen(true);
                 setSelectedMovie(data);
@@ -91,6 +67,7 @@ function MovieList() {
               <EditOutlined />
             </Button>
             <Button
+              className="action-btn delete-btn"
               onClick={() => {
                 setIsDeleteModalOpen(true);
                 setSelectedMovie(data);
@@ -109,10 +86,8 @@ function MovieList() {
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [formType, setFormType] = useState("add");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
   const dispatch = useDispatch();
-
-  const getData = async () => {
+  const getData = useCallback(async () => {
     dispatch(ShowLoading());
     const response = await getAllMovies();
     const allMovies = response.data;
@@ -122,23 +97,33 @@ function MovieList() {
       })
     );
     dispatch(HideLoading());
-  };
-
-  useEffect(() => {
+  }, [dispatch]);  useEffect(() => {
     getData();
-  }, []);
-
+  }, [getData]);
   return (
-    <div className="d-flex justify-content-end">
-      <Button
-        onClick={() => {
-          setIsModalOpen(true);
-          setFormType("add");
-        }}
-      >
-        Add Movie
-      </Button>
-      <Table dataSource={movies} columns={tableHeadings} />
+    <div className="admin-page-container">
+      <div className="page-header">
+        <h2 className="page-title">Movie Management</h2>
+        <Button
+          type="primary"
+          className="add-button"
+          size="large"
+          onClick={() => {
+            setIsModalOpen(true);
+            setFormType("add");
+          }}
+        >
+          Add New Movie
+        </Button>
+      </div>
+      <div className="table-container">
+        <Table 
+          dataSource={movies} 
+          columns={tableHeadings} 
+          className="modern-table"
+          scroll={{ x: 800 }}
+        />
+      </div>
       {isModalOpen && (
         <MovieForm
           isModalOpen={isModalOpen}

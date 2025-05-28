@@ -1,7 +1,8 @@
-import { Modal, message } from "antd";
+import { Modal } from "antd";
 import { deleteMovie } from "../../api/movie";
 import { ShowLoading, HideLoading } from "../../redux/loaderSlice";
 import { useDispatch } from "react-redux";
+import toast from "react-hot-toast";
 
 const DeleteMovieModal = ({
   isDeleteModalOpen,
@@ -11,17 +12,16 @@ const DeleteMovieModal = ({
   getData,
 }) => {
   const dispatch = useDispatch();
-
   const handleOk = async () => {
     try {
       dispatch(ShowLoading());
       const movieId = selectedMovie._id;
       const response = await deleteMovie({ movieId });
       if (response.success) {
-        message.success(response.message);
+        toast.success(response.message);
         getData();
       } else {
-        message.error(response.message);
+        toast.error(response.message);
       }
       setSelectedMovie(null);
       setIsDeleteModalOpen(false);
@@ -29,7 +29,7 @@ const DeleteMovieModal = ({
     } catch (err) {
       dispatch(HideLoading());
       setIsDeleteModalOpen(false);
-      message.error(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -37,18 +37,35 @@ const DeleteMovieModal = ({
     setIsDeleteModalOpen(false);
     setSelectedMovie(null);
   };
-
   return (
     <Modal
-      title="Delete Movie?"
+      title="Delete Movie"
       open={isDeleteModalOpen}
       onOk={handleOk}
       onCancel={handleCancel}
+      className="modern-modal delete-modal"
+      okText="Delete Movie"
+      cancelText="Cancel"
+      okButtonProps={{
+        danger: true,
+        size: "large",
+        className: "delete-confirm-btn"
+      }}
+      cancelButtonProps={{
+        size: "large",
+        className: "cancel-button"
+      }}
     >
-      <p className="pt-3 fs-18">Are you sure you want to delete this movie?</p>
-      <p className="pb-3 fs-18">
-        This action can't be undone and you'll lose this movie data.
-      </p>
+      <div className="delete-modal-content">
+        <div className="warning-icon">⚠️</div>
+        <h3 className="delete-title">Are you sure?</h3>
+        <p className="delete-message">
+          You are about to delete <strong>"{selectedMovie?.title}"</strong>. This action cannot be undone and you'll lose all data associated with this movie.
+        </p>
+        <div className="delete-warning">
+          This will also remove all shows and bookings associated with this movie.
+        </div>
+      </div>
     </Modal>
   );
 };

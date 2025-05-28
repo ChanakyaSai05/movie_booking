@@ -1,4 +1,6 @@
 import axios from "axios";
+import toast from "react-hot-toast";
+import { showErrorToasts } from "../utils/errorHandler";
 
 export const axiosInstance = axios.create({
   headers: {
@@ -26,35 +28,47 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   function (error) {
+    console.log(error, "error in axios interceptor");
     if (error.response) {
       // Server responded with error status
       const { status, data } = error.response;
-      
       if (status === 401) {
-        // Unauthorized - clear token and redirect to login
+        // Unauthorized - clear token and redirect to login (only critical error that shows toast)
         localStorage.removeItem("token");
-        window.location.href = "/login";
-        return Promise.reject(new Error("Session expired. Please login again."));
+        toast.error("Session expired. Please login again.");
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1500);
+        return Promise.reject(
+          new Error("Session expired. Please login again.")
+        );
       }
-      
-      if (status === 403) {
-        return Promise.reject(new Error("Access denied. You don't have permission."));
+
+      if (status === 429) {
+        // Rate limit exceeded - show toast since this is a system-level error
+        const message =
+          data?.message || "Too many requests. Please try again later.";
+        toast.error(message);
+        return Promise.reject(new Error(message));
       }
-      
-      if (status === 404) {
-        return Promise.reject(new Error("Resource not found."));
+
+      // For other errors, let components handle the toast notifications
+      // Just pass through the error message from server
+      const message =
+        data?.message || data?.errors?.[0]?.msg || "An error occurred";
+      console.log(data, "data");
+      if (Array.isArray(data.errors)) {
+        // If there are multiple validation errors, show them as individual toasts
+        showErrorToasts(data.errors);
+      } else {
       }
-      
-      if (status >= 500) {
-        return Promise.reject(new Error("Server error. Please try again later."));
-      }
-      
-      // Return the error message from server if available
-      const message = data?.message || data?.errors?.[0]?.msg || "An error occurred";
       return Promise.reject(new Error(message));
     } else if (error.request) {
-      // Network error
-      return Promise.reject(new Error("Network error. Please check your connection."));
+      // Network error - this is critical so we show toast
+      toast.error("Network error. Please check your connection.");
+      return Promise.reject(
+        new Error("Network error. Please check your connection.")
+      );
     } else {
       // Something else happened
       return Promise.reject(error);

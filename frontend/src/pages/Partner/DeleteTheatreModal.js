@@ -1,7 +1,8 @@
-import { Modal, message } from "antd";
+import { Modal } from "antd";
 import { deleteTheatre } from "../../api/theatre";
 import { ShowLoading, HideLoading } from "../../redux/loaderSlice";
 import { useDispatch } from "react-redux";
+import toast from "react-hot-toast";
 
 const DeleteTheatreModal = ({
   isDeleteModalOpen,
@@ -11,17 +12,17 @@ const DeleteTheatreModal = ({
   getData,
 }) => {
   const dispatch = useDispatch();
-
   const handleOk = async () => {
     try {
       dispatch(ShowLoading());
       const theatreId = selectedTheatre._id;
+      console.log("Deleting theatre with ID:", theatreId);
       const response = await deleteTheatre({ theatreId });
       if (response.success) {
-        message.success(response.message);
+        toast.success(response.message);
         getData();
       } else {
-        message.error(response.message);
+        toast.error(response.message);
       }
       setSelectedTheatre(null);
       setIsDeleteModalOpen(false);
@@ -29,7 +30,7 @@ const DeleteTheatreModal = ({
     } catch (err) {
       dispatch(HideLoading());
       setIsDeleteModalOpen(false);
-      message.error(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -37,20 +38,35 @@ const DeleteTheatreModal = ({
     setIsDeleteModalOpen(false);
     setSelectedTheatre(null);
   };
-
   return (
     <Modal
-      title="Delete Theatre?"
+      title="Delete Theatre"
       open={isDeleteModalOpen}
       onOk={handleOk}
       onCancel={handleCancel}
+      className="modern-modal delete-modal"
+      okText="Delete Theatre"
+      cancelText="Cancel"
+      okButtonProps={{
+        danger: true,
+        size: "large",
+        className: "delete-confirm-btn"
+      }}
+      cancelButtonProps={{
+        size: "large",
+        className: "cancel-button"
+      }}
     >
-      <p className="pt-3 fs-18">
-        Are you sure you want to delete this Theatre?
-      </p>
-      <p className="pb-3 fs-18">
-        This action can't be undone and you'll lose this Theatre data.
-      </p>
+      <div className="delete-modal-content">
+        <div className="warning-icon">⚠️</div>
+        <h3 className="delete-title">Are you sure?</h3>
+        <p className="delete-message">
+          You are about to delete <strong>"{selectedTheatre?.name}"</strong>. This action cannot be undone and you'll lose all data associated with this theatre.
+        </p>
+        <div className="delete-warning">
+          This will also remove all shows and bookings associated with this theatre.
+        </div>
+      </div>
     </Modal>
   );
 };

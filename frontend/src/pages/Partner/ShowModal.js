@@ -7,7 +7,9 @@ import {
   Button,
   Select,
   Table,
-  message,
+  Tag,
+  Tooltip,
+  Popconfirm,
 } from "antd";
 
 import { ShowLoading, HideLoading } from "../../redux/loaderSlice";
@@ -16,8 +18,13 @@ import {
   ArrowLeftOutlined,
   EditOutlined,
   DeleteOutlined,
+  PlusOutlined,
+  CalendarOutlined,
+  ClockCircleOutlined,
+  UserOutlined,
+  DollarOutlined,
 } from "@ant-design/icons";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 // import { useSelector } from 'react-redux';
 import { getAllMovies } from "../../api/movie";
 import {
@@ -27,6 +34,8 @@ import {
   updateShow,
 } from "../../api/shows";
 import moment from "moment";
+import toast from "react-hot-toast";
+import { showErrorToasts, extractErrorFromResponse } from "../../utils/errorHandler";
 
 const ShowModal = ({
   isShowModalOpen,
@@ -38,16 +47,15 @@ const ShowModal = ({
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [shows, setShows] = useState(null);
   const [selectedShow, setSelectedShow] = useState(null);
-  const dispatch = useDispatch();
-
-  const getData = async () => {
+  const dispatch = useDispatch();  const getData = useCallback(async () => {
     try {
       dispatch(ShowLoading());
       const movieResponse = await getAllMovies();
       if (movieResponse.success) {
         setMovies(movieResponse.data);
       } else {
-        message.error(movieResponse.message);
+        const errors = movieResponse.errors || movieResponse.message || "Failed to load movies";
+        showErrorToasts(errors);
       }
 
       const showResponse = await getShowsByTheatre({
@@ -56,17 +64,17 @@ const ShowModal = ({
       if (showResponse.success) {
         setShows(showResponse.data);
       } else {
-        message.error(showResponse.message);
+        const errors = showResponse.errors || showResponse.message || "Failed to load shows";
+        showErrorToasts(errors);
       }
 
       dispatch(HideLoading());
     } catch (err) {
-      message.error(err.message);
+      const extractedErrors = extractErrorFromResponse(err);
+      showErrorToasts(extractedErrors);
       dispatch(HideLoading());
     }
-  };
-
-  const onFinish = async (values) => {
+  }, [dispatch, selectedTheatre._id]);  const onFinish = async (values) => {
     try {
       dispatch(ShowLoading());
       let response = null;
@@ -82,250 +90,292 @@ const ShowModal = ({
       }
       if (response.success) {
         getData();
-        message.success(response.message);
-        setView("table");
-      } else {
-        message.error(response.message);
+        toast.success(response.message);
+        setView("table");      } else {
+        if (response.errors && Array.isArray(response.errors)) {
+          showErrorToasts(response.errors);
+        } else {
+          showErrorToasts(response.message || "Operation failed");
+        }
       }
       dispatch(HideLoading());
     } catch (err) {
-      message.error(err.message);
+      const extractedErrors = extractErrorFromResponse(err);
+      showErrorToasts(extractedErrors);
       dispatch(HideLoading());
     }
   };
 
   const handleCancel = () => {
     setIsShowModalOpen(false);
-  };
-
-  const handleDelete = async (showId) => {
+  };  const handleDelete = async (showId) => {
     try {
       dispatch(ShowLoading());
       const response = await deleteShow({ showId: showId });
       if (response.success) {
-        message.success(response.message);
-        getData();
-      } else {
-        message.error(response.message);
+        toast.success(response.message);
+        getData();      } else {
+        if (response.errors && Array.isArray(response.errors)) {
+          showErrorToasts(response.errors);
+        } else {
+          showErrorToasts(response.message || "Failed to delete show");
+        }
       }
       dispatch(HideLoading());
     } catch (err) {
-      message.error(err.message);
+      const extractedErrors = extractErrorFromResponse(err);
+      showErrorToasts(extractedErrors);
       dispatch(HideLoading());
     }
   };
-
   const columns = [
     {
       title: "Show Name",
       dataIndex: "name",
       key: "name",
+      render: (name) => (
+        <span className="show-name">{name}</span>
+      ),
     },
     {
       title: "Show Date",
       dataIndex: "date",
-      render: (text, data) => {
-        return moment(text).format("MMM Do YYYY");
-      },
+      render: (text) => (
+        <div className="show-date">
+          <CalendarOutlined className="date-icon" />
+          <span>{moment(text).format("MMM Do YYYY")}</span>
+        </div>
+      ),
     },
     {
       title: "Show Time",
       dataIndex: "time",
-      render: (text, data) => {
-        return moment(text, "HH:mm").format("hh:mm A");
-      },
+      render: (text) => (
+        <div className="show-time">
+          <ClockCircleOutlined className="time-icon" />
+          <span>{moment(text, "HH:mm").format("hh:mm A")}</span>
+        </div>
+      ),
     },
     {
       title: "Movie",
       dataIndex: "movie",
-      render: (text, data) => {
-        return data.movie.title;
-      },
+      render: (text, data) => (
+        <Tag color="blue" className="movie-tag">
+          {data.movie.title}
+        </Tag>
+      ),
     },
     {
       title: "Ticket Price",
       dataIndex: "ticketPrice",
       key: "ticketPrice",
+      render: (price) => (
+        <div className="ticket-price">
+          <DollarOutlined className="price-icon" />
+          <span>₹{price}</span>
+        </div>
+      ),
     },
     {
       title: "Total Seats",
       dataIndex: "totalSeats",
       key: "totalSeats",
+      render: (seats) => (
+        <div className="seat-info">
+          <UserOutlined className="seat-icon" />
+          <span>{seats}</span>
+        </div>
+      ),
     },
     {
       title: "Available Seats",
       dataIndex: "seats",
       render: (text, data) => {
-        return data.totalSeats - data.bookedSeats.length;
+        const available = data.totalSeats - data.bookedSeats.length;
+        const percentage = (available / data.totalSeats) * 100;
+        return (
+          <Tag 
+            color={percentage > 70 ? 'green' : percentage > 30 ? 'orange' : 'red'}
+            className="availability-tag"
+          >
+            {available} available
+          </Tag>
+        );
       },
     },
     {
-      title: "Action",
+      title: "Actions",
       dataIndex: "action",
       render: (text, data) => {
         return (
-          <div className="d-flex align-items-center gap-10">
-            <Button
-              onClick={() => {
-                setView("edit");
-                setSelectedMovie(data.movie);
-                setSelectedShow({
-                  ...data,
-                  date: moment(data.date).format("YYYY-MM-DD"),
-                });
-                console.log(selectedMovie && selectedMovie.title);
-              }}
-            >
-              <EditOutlined />
-            </Button>
-            <Button onClick={() => handleDelete(data._id)}>
-              <DeleteOutlined />
-            </Button>
-            {data.isActive && (
+          <div className="show-actions">
+            <Tooltip title="Edit Show">
               <Button
+                type="text"
+                size="small"
+                className="action-btn edit-btn"
+                icon={<EditOutlined />}
                 onClick={() => {
-                  setIsShowModalOpen(true);
+                  setView("edit");
+                  setSelectedMovie(data.movie);
+                  setSelectedShow({
+                    ...data,
+                    date: moment(data.date).format("YYYY-MM-DD"),
+                  });
                 }}
-              >
-                + Shows
-              </Button>
-            )}
+              />
+            </Tooltip>
+            <Popconfirm
+              title="Delete Show"
+              description="Are you sure you want to delete this show?"
+              onConfirm={() => handleDelete(data._id)}
+              okText="Yes"
+              cancelText="No"
+            >
+              <Tooltip title="Delete Show">
+                <Button
+                  type="text"
+                  size="small"
+                  className="action-btn delete-btn"
+                  icon={<DeleteOutlined />}
+                />
+              </Tooltip>
+            </Popconfirm>
           </div>
         );
       },
     },
-  ];
-
-  useEffect(() => {
+  ];  useEffect(() => {
     getData();
-  }, []);
-
+  }, [getData]);
   return (
     <Modal
       centered
-      title={selectedTheatre.name}
+      title={
+        <div className="show-modal-header">
+          <h2 className="modal-title">🎬 {selectedTheatre.name}</h2>
+          <p className="modal-subtitle">Manage shows and schedules</p>
+        </div>
+      }
       open={isShowModalOpen}
       onCancel={handleCancel}
       width={1200}
       footer={null}
+      className="modern-modal show-modal"
     >
-      <div className="d-flex justify-content-between">
-        <h3>
-          {view === "table"
-            ? "List of Shows"
-            : view === "add"
-            ? "Add Show"
-            : "Edit Show"}
-        </h3>
-        {view === "table" && (
-          <Button type="primary" onClick={() => setView("add")}>
-            Add Show
-          </Button>
-        )}
-      </div>
-      {view === "table" && <Table dataSource={shows} columns={columns} />}
+      <div className="show-modal-content">
+        <div className="show-header">
+          <div className="view-title">
+            <h3 className="section-title">
+              {view === "table"
+                ? "📅 Show Schedule"
+                : view === "add"
+                ? "➕ Add New Show"
+                : "✏️ Edit Show"}
+            </h3>
+            {view === "table" && (
+              <p className="section-subtitle">
+                Manage all shows for {selectedTheatre.name}
+              </p>
+            )}
+          </div>
+          {view === "table" && (
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />}
+              className="add-show-btn"
+              onClick={() => setView("add")}
+            >
+              Add New Show
+            </Button>
+          )}
+        </div>
 
-      {(view === "add" || view === "edit") && (
-        <Form
-          className=""
-          layout="vertical"
-          style={{ width: "100%" }}
-          initialValues={view === "edit" ? selectedShow : null}
-          onFinish={onFinish}
-        >
-          <Row
-            gutter={{
-              xs: 6,
-              sm: 10,
-              md: 12,
-              lg: 16,
-            }}
-          >
-            <Col span={24}>
-              <Row
-                gutter={{
-                  xs: 6,
-                  sm: 10,
-                  md: 12,
-                  lg: 16,
-                }}
-              >
+        {view === "table" && (
+          <div className="shows-table-wrapper">
+            <Table 
+              dataSource={shows} 
+              columns={columns}
+              className="modern-table shows-table"
+              pagination={{
+                pageSize: 6,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => 
+                  `${range[0]}-${range[1]} of ${total} shows`
+              }}
+              scroll={{ x: 1000 }}
+              rowKey="_id"
+            />
+          </div>
+        )}        {(view === "add" || view === "edit") && (
+          <div className="show-form-wrapper">
+            <Form
+              layout="vertical"
+              className="show-form"
+              initialValues={view === "edit" ? selectedShow : null}
+              onFinish={onFinish}
+            >
+              <Row gutter={[24, 16]}>
                 <Col span={8}>
                   <Form.Item
                     label="Show Name"
-                    htmlFor="name"
                     name="name"
-                    className="d-block"
                     rules={[
                       { required: true, message: "Show name is required!" },
                     ]}
                   >
                     <Input
-                      id="name"
-                      type="text"
-                      placeholder="Enter the show name"
-                    ></Input>
+                      placeholder="Enter show name"
+                      size="large"
+                      className="form-input"
+                    />
                   </Form.Item>
                 </Col>
                 <Col span={8}>
                   <Form.Item
                     label="Show Date"
-                    htmlFor="date"
                     name="date"
-                    className="d-block"
                     rules={[
                       { required: true, message: "Show date is required!" },
                     ]}
                   >
                     <Input
-                      id="date"
                       type="date"
-                      placeholder="Enter the show date"
-                    ></Input>
+                      size="large"
+                      className="form-input"
+                      min={moment().format("YYYY-MM-DD")}
+                    />
                   </Form.Item>
                 </Col>
                 <Col span={8}>
                   <Form.Item
-                    label="Show Timing"
-                    htmlFor="time"
+                    label="Show Time"
                     name="time"
-                    className="d-block"
                     rules={[
                       { required: true, message: "Show time is required!" },
                     ]}
                   >
                     <Input
-                      id="time"
                       type="time"
-                      placeholder="Enter the show date"
-                    ></Input>
+                      size="large"
+                      className="form-input"
+                    />
                   </Form.Item>
                 </Col>
-              </Row>
-            </Col>
-            <Col span={24}>
-              <Row
-                gutter={{
-                  xs: 6,
-                  sm: 10,
-                  md: 12,
-                  lg: 16,
-                }}
-              >
                 <Col span={8}>
                   <Form.Item
-                    label="Select the Movie"
-                    htmlFor="movie"
+                    label="Select Movie"
                     name="movie"
-                    className="d-block"
-                    rules={[{ required: true, message: "Movie  is required!" }]}
+                    rules={[{ required: true, message: "Movie is required!" }]}
                   >
                     <Select
-                      id="movie"
-                      placeholder="Select Movie"
+                      placeholder="Select a movie"
+                      size="large"
+                      className="form-select"
                       defaultValue={selectedMovie && selectedMovie.title}
-                      style={{ width: "100%", height: "45px" }}
-                      options={movies.map((movie) => ({
+                      options={movies?.map((movie) => ({
                         key: movie._id,
                         value: movie._id,
                         label: movie.title,
@@ -335,63 +385,63 @@ const ShowModal = ({
                 </Col>
                 <Col span={8}>
                   <Form.Item
-                    label="Ticket Price"
-                    htmlFor="ticketPrice"
+                    label="Ticket Price (₹)"
                     name="ticketPrice"
-                    className="d-block"
                     rules={[
                       { required: true, message: "Ticket price is required!" },
                     ]}
                   >
                     <Input
-                      id="ticketPrice"
                       type="number"
-                      placeholder="Enter the ticket price"
-                    ></Input>
+                      placeholder="Enter ticket price"
+                      size="large"
+                      className="form-input"
+                      min={0}
+                    />
                   </Form.Item>
                 </Col>
                 <Col span={8}>
                   <Form.Item
                     label="Total Seats"
-                    htmlFor="totalSeats"
                     name="totalSeats"
-                    className="d-block"
                     rules={[
                       { required: true, message: "Total seats are required!" },
                     ]}
                   >
                     <Input
-                      id="totalSeats"
                       type="number"
-                      placeholder="Enter the number of total seats"
-                    ></Input>
+                      placeholder="Enter total seats"
+                      size="large"
+                      className="form-input"
+                      min={1}
+                    />
                   </Form.Item>
                 </Col>
               </Row>
-            </Col>
-          </Row>
-          <div className="d-flex gap-10">
-            <Button
-              className=""
-              block
-              onClick={() => {
-                setView("table");
-              }}
-              htmlType="button"
-            >
-              <ArrowLeftOutlined /> Go Back
-            </Button>
-            <Button
-              block
-              type="primary"
-              htmlType="submit"
-              style={{ fontSize: "1rem", fontWeight: "600" }}
-            >
-              {view === "add" ? "Add the Show" : "Edit the Show"}
-            </Button>
+              
+              <div className="form-actions">
+                <Button
+                  type="default"
+                  size="large"
+                  icon={<ArrowLeftOutlined />}
+                  onClick={() => setView("table")}
+                  className="back-button"
+                >
+                  Go Back
+                </Button>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  size="large"
+                  className="submit-button"
+                >
+                  {view === "add" ? "Add Show" : "Update Show"}
+                </Button>
+              </div>
+            </Form>
           </div>
-        </Form>
-      )}
+        )}
+      </div>
     </Modal>
   );
 };

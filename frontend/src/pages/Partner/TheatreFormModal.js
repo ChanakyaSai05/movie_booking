@@ -1,9 +1,13 @@
-import { Col, Modal, Row, Form, Input, Select, Button, message } from "antd";
+import { Col, Modal, Row, Form, Input, Button } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import { ShowLoading, HideLoading } from "../../redux/loaderSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { addTheatre, updateTheatre } from "../../api/theatre";
-import moment from "moment";
+import toast from "react-hot-toast";
+import {
+  showErrorToasts,
+  extractErrorFromResponse,
+} from "../../utils/errorHandler";
 
 const TheatreForm = ({
   isModalOpen,
@@ -15,7 +19,6 @@ const TheatreForm = ({
 }) => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.users);
-
   const onFinish = async (values) => {
     try {
       dispatch(ShowLoading());
@@ -28,16 +31,23 @@ const TheatreForm = ({
       }
       if (response.success) {
         getData();
-        message.success(response.message);
+        toast.success(response.message);
         setIsModalOpen(false);
       } else {
-        message.error(response.message);
+        // Handle validation errors or other backend errors
+        if (response.errors && Array.isArray(response.errors)) {
+          showErrorToasts(response.errors);
+        } else {
+          showErrorToasts(response.message || "Operation failed");
+        }
       }
       setSelectedTheatre(null);
       dispatch(HideLoading());
     } catch (err) {
       dispatch(HideLoading());
-      message.error(err.message);
+      // Extract and show detailed error messages
+      const extractedErrors = extractErrorFromResponse(err);
+      showErrorToasts(extractedErrors);
     }
   };
 
@@ -45,84 +55,109 @@ const TheatreForm = ({
     setIsModalOpen(false);
     setSelectedTheatre(null);
   };
-
   return (
     <Modal
       centered
-      title={formType === "add" ? "Add Theatre" : "Edit Theatre"}
+      title={formType === "add" ? "Add New Theatre" : "Edit Theatre"}
       open={isModalOpen}
       onCancel={handleCancel}
       width={800}
       footer={null}
+      className="modern-modal"
     >
       <Form
         layout="vertical"
         initialValues={selectedTheatre}
         onFinish={onFinish}
+        className="theatre-form"
       >
-        <Row gutter={{ xs: 6, sm: 10, md: 12, lg: 16 }}>
+        <Row gutter={[16, 16]}>
           <Col span={24}>
             <Form.Item
               label="Theatre Name"
               name="name"
               rules={[{ required: true, message: "Theatre name is required!" }]}
             >
-              <Input placeholder="Enter the Theatre name" />
+              <Input
+                placeholder="Enter the theatre name"
+                size="large"
+                className="form-input"
+              />
             </Form.Item>
           </Col>
+
           <Col span={24}>
             <Form.Item
               label="Address"
               name="address"
               rules={[
-                { required: true, message: "Theatre adddress is required!" },
+                { required: true, message: "Theatre address is required!" },
               ]}
             >
-              <TextArea rows="4" placeholder="Enter the address" />
+              <TextArea
+                rows={4}
+                placeholder="Enter the complete address"
+                className="form-input"
+              />
             </Form.Item>
           </Col>
-          <Col span={24}>
-            <Row gutter={{ xs: 6, sm: 10, md: 12, lg: 16 }}>
-              <Col span={12}>
-                <Form.Item
-                  label="Email"
-                  name="email"
-                  rules={[{ required: true, message: "Email is required!" }]}
-                >
-                  <Input type="email" placeholder="Enter the email" />
-                </Form.Item>
-              </Col>
 
-              <Col span={12}>
-                <Form.Item
-                  label="Phone Number"
-                  name="phone"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Phone is required!",
-                    },
-                  ]}
-                >
-                  <Input type="number" />
-                </Form.Item>
-              </Col>
-            </Row>
+          <Col span={12}>
+            <Form.Item
+              label="Email"
+              name="email"
+              rules={[
+                { required: true, message: "Email is required!" },
+                { type: "email", message: "Please enter a valid email!" },
+              ]}
+            >
+              <Input
+                type="email"
+                placeholder="Enter the email address"
+                size="large"
+                className="form-input"
+              />
+            </Form.Item>
+          </Col>
+
+          <Col span={12}>
+            <Form.Item
+              label="Phone Number"
+              name="phone"
+              rules={[
+                {
+                  required: true,
+                  message: "Phone number is required!",
+                },
+                {
+                  pattern: /^[0-9]{10}$/,
+                  message: "Please enter a valid 10-digit phone number!",
+                },
+              ]}
+            >
+              <Input
+                placeholder="Enter 10-digit phone number"
+                size="large"
+                className="form-input"
+                maxLength={10}
+              />
+            </Form.Item>
           </Col>
         </Row>
-        <Form.Item>
+
+        <div className="form-actions">
           <Button
-            block
             type="primary"
             htmlType="submit"
-            style={{ fontSize: "1rem", fontWeight: "600" }}
+            size="large"
+            className="submit-button"
           >
-            Submit the Data
+            {formType === "add" ? "Add Theatre" : "Update Theatre"}
           </Button>
-          <Button className="mt-3" block onClick={handleCancel}>
+          <Button size="large" onClick={handleCancel} className="cancel-button">
             Cancel
           </Button>
-        </Form.Item>
+        </div>
       </Form>
     </Modal>
   );

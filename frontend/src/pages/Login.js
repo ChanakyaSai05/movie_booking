@@ -1,32 +1,38 @@
 import React from "react";
-import { Form, Button, Input, message } from "antd";
+import { Form, Button, Input } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import { LoginUser } from "../api/users";
+import toast from "react-hot-toast";
+import { showErrorToasts, extractErrorFromResponse } from "../utils/errorHandler";
 
 function Login() {
-  const navigate = useNavigate();
-
-  const onFinish = async (values) => {
+  const navigate = useNavigate();  const onFinish = async (values) => {
     try {
       const response = await LoginUser(values);
       if (response.success) {
         console.log(response);
-        message.success(response.message);
+        toast.success(response.message);
         localStorage.setItem("token", response.data);
         navigate("/");
       } else {
-        message.error(response.message);
+        // Handle validation errors or other backend errors
+        if (response.errors && Array.isArray(response.errors)) {
+          showErrorToasts(response.errors);
+        } else {
+          showErrorToasts(response.message || "Login failed");
+        }
       }
     } catch (err) {
       console.log(err);
-      message.error(message.error);
+      // Extract and show detailed error messages
+      const extractedErrors = extractErrorFromResponse(err);
+      showErrorToasts(extractedErrors);
     }
-  };
-  return (
+  };return (
     <>
       <main className="App-header">
-        <h1>Login to Book My Show</h1>
-        <section className="mw-500 text-center px-3">
+        <h1>Welcome to BookMyShow</h1>
+        <section className="auth-form-container mw-500 px-3">
           <Form layout="vertical" onFinish={onFinish}>
             <Form.Item
               label="Email"
@@ -42,7 +48,8 @@ function Login() {
                 id="email"
                 type="text"
                 placeholder="Enter your email"
-              ></Input>
+                size="large"
+              />
             </Form.Item>
             <Form.Item
               label="Password"
@@ -51,28 +58,29 @@ function Login() {
               className="d-block"
               rules={[{ required: true, message: "Password is required" }]}
             >
-              <Input
+              <Input.Password
                 id="password"
-                type="password"
                 placeholder="Enter your password"
-              ></Input>
+                size="large"
+              />
             </Form.Item>
             <Form.Item className="d-block">
               <Button
                 type="primary"
                 htmlType="submit"
                 block
-                style={{ fontSize: "1.5rem", fontWeight: "600" }}
+                size="large"
+                style={{ fontSize: "1rem", fontWeight: "600" }}
               >
-                Login
+                Sign In
               </Button>
             </Form.Item>
-            <div>
+            <div className="auth-links">
               <p>
-                New User? <Link to="/register">Register</Link>
+                New to BookMyShow? <Link to="/register">Create Account</Link>
               </p>
               <p>
-                Forgot Password? <Link to="/forget">Click Here</Link>
+                <Link to="/forget">Forgot your password?</Link>
               </p>
             </div>
           </Form>
