@@ -5,7 +5,8 @@ export const getAllMovies = async () => {
     const response = await axiosInstance.get("/api/movies/get-all-movies");
     return response.data;
   } catch (error) {
-    console.log(error);
+    console.error("Get movies error:", error);
+    throw error;
   }
 };
 
@@ -14,7 +15,8 @@ export const addMovie = async (value) => {
     const response = await axiosInstance.post("/api/movies/add-movie", value);
     return response.data;
   } catch (error) {
-    console.log(error);
+    console.error("Add movie error:", error);
+    throw error;
   }
 };
 
@@ -26,7 +28,8 @@ export const updateMovie = async (payload) => {
     );
     return response.data;
   } catch (error) {
-    console.log(error);
+    console.error("Update movie error:", error);
+    throw error;
   }
 };
 

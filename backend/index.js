@@ -1,6 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const helmet = require("helmet");
 const connectDB = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
 const movieRoutes = require("./routes/movieRoutes");
@@ -8,13 +9,27 @@ const theatreRoutes= require("./routes/theatreRoutes");
 const showRoutes = require("./routes/showRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
 const errorHandler = require("./middlewares/errorHandler");
+const { apiLimiter } = require("./middlewares/rateLimitMiddleware");
 
 dotenv.config();
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// Security middleware
+app.use(helmet());
+
+// CORS configuration
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://yourdomain.com'] // Replace with your production domain
+    : ['http://localhost:3000'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
+
+// Other middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(apiLimiter); // Apply rate limiting to all routes
 
 // Connect to DB
 connectDB();

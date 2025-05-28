@@ -21,7 +21,7 @@ const getAllMovies = async (req, res) => {
       message: "All movies have been fetched",
       data: allMovies,
     });
-  } catch (err) {
+  } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -33,7 +33,7 @@ const updateMovie = async (req, res) => {
       success: true,
       message: "Movie has been updated",
     });
-  } catch (err) {
+  } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -46,7 +46,7 @@ const deleteMovie = async (req, res) => {
       success: true,
       message: "Movie has been deleted",
     });
-  } catch (err) {
+  } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -58,7 +58,7 @@ const getMovieById = async (req, res) => {
       message: "movie fetched successfully",
       data: movie,
     });
-  } catch (err) {
+  } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
 };

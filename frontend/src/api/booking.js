@@ -8,7 +8,8 @@ export const makePayment = async (token, amount) => {
     });
     return response.data;
   } catch (error) {
-    console.log(error);
+    console.error("Payment error:", error);
+    throw error;
   }
 };
 
@@ -20,7 +21,8 @@ export const bookShow = async (payload) => {
     );
     return response.data;
   } catch (error) {
-    console.log(error);
+    console.error("Booking error:", error);
+    throw error;
   }
 };
 
@@ -31,6 +33,7 @@ export const getAllBookings = async (userId) => {
     );
     return response.data;
   } catch (error) {
-    console.log(error);
+    console.error("Get bookings error:", error);
+    throw error;
   }
 };

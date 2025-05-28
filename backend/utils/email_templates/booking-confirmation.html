@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+        }
+        .booking-details {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .seats {
+            background: #4CAF50;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            display: inline-block;
+            margin: 2px;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎬 BookMyShow</h1>
+        <h2>Booking Confirmation</h2>
+    </div>
+    
+    <div class="content">
+        <h3>Dear {{customerName}},</h3>
+        
+        <p>Your movie ticket booking has been confirmed! Here are your booking details:</p>
+        
+        <div class="booking-details">
+            <div class="detail-row">
+                <strong>Booking ID:</strong>
+                <span>{{bookingId}}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Movie:</strong>
+                <span>{{movieTitle}}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Theatre:</strong>
+                <span>{{theatreName}}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Date:</strong>
+                <span>{{showDate}}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Time:</strong>
+                <span>{{showTime}}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Seats:</strong>
+                <div>
+                    {{#each seats}}
+                    <span class="seats">{{this}}</span>
+                    {{/each}}
+                </div>
+            </div>
+            <div class="detail-row">
+                <strong>Total Amount:</strong>
+                <span>${{totalAmount}}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Transaction ID:</strong>
+                <span>{{transactionId}}</span>
+            </div>
+        </div>
+        
+        <p><strong>Important Instructions:</strong></p>
+        <ul>
+            <li>Please arrive at the theatre at least 15 minutes before the show time</li>
+            <li>Carry a valid ID proof for verification</li>
+            <li>This booking confirmation serves as your ticket</li>
+            <li>No refunds or exchanges are allowed</li>
+        </ul>
+        
+        <p>Thank you for choosing BookMyShow! We hope you enjoy the movie.</p>
+    </div>
+    
+    <div class="footer">
+        <p>This is an automated email. Please do not reply to this email.</p>
+        <p>&copy; 2025 BookMyShow. All rights reserved.</p>
+    </div>
+</body>
+</html>

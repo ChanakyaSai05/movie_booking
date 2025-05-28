@@ -107,13 +107,11 @@ const BookShow = () => {
         </div>
       </div>
     );
-  };
-
-  // Effect hook to fetch data on component mount
+  };  // Effect hook to fetch data on component mount
   useEffect(() => {
     getData();
-  }, []);
-
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  
   const onToken = async (token) => {
     console.log(token);
     try {
@@ -124,14 +122,15 @@ const BookShow = () => {
       );
       if (response.success) {
         message.success(response.message);
-        book(response.data);
+        // Use the transactionId from the PaymentIntent response
+        book(response.data.transactionId);
       } else {
         message.error(response.message);
       }
       dispatch(HideLoading());
     } catch (err) {
       console.log(err);
-      message.error(err.message);
+      message.error(err.message || "Payment failed. Please try again.");
       dispatch(HideLoading());
     }
   };
@@ -143,6 +142,7 @@ const BookShow = () => {
         transactionId,
         seats: selectedSeats,
         user: user._id,
+        totalPrice: selectedSeats.length * show.ticketPrice * 100, // Add total price for validation
       });
       if (response.success) {
         message.success(response.message);
@@ -153,6 +153,8 @@ const BookShow = () => {
       dispatch(HideLoading());
     } catch (err) {
       console.log(err);
+      message.error(err.message);
+      dispatch(HideLoading());
     }
   };
 

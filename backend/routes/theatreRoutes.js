@@ -1,7 +1,9 @@
 const router = require("express").Router();
 const Theatre = require("../models/theatreModel");
+const { validateTheatre, validateMongoId } = require("../middlewares/validationMiddleware");
+const authMiddleware = require("../middlewares/authMiddleware");
 
-router.post("/add-theatre", async (req, res) => {
+router.post("/add-theatre", authMiddleware, ...validateTheatre, async (req, res) => {
   try {
     const newTheatre = new Theatre(req.body);
     await newTheatre.save();
@@ -13,7 +15,7 @@ router.post("/add-theatre", async (req, res) => {
 
 // update theatre
 
-router.put("/update-theatre", async (req, res) => {
+router.put("/update-theatre", authMiddleware, ...validateTheatre, async (req, res) => {
   try {
     const theatre = await Theatre.findById(req.body.theatreId);
     if (!theatre) {
@@ -32,7 +34,7 @@ router.put("/update-theatre", async (req, res) => {
 });
 
 // delete theatre
-router.delete("/delete-theatre/:theatreId", async (req, res) => {
+router.delete("/delete-theatre/:theatreId", authMiddleware, ...validateMongoId('theatreId'), async (req, res) => {
   try {
     console.log("deleting theatre", req.params.theatreId);
     await Theatre.findByIdAndDelete(req.params.theatreId);
@@ -46,7 +48,7 @@ router.delete("/delete-theatre/:theatreId", async (req, res) => {
 });
 
 // get all theatres for admin route
-router.get("/get-all-theatres", async (req, res) => {
+router.get("/get-all-theatres", authMiddleware, async (req, res) => {
   try {
     const allTheatres = await Theatre.find().populate("owner");
     res.send({
@@ -60,7 +62,7 @@ router.get("/get-all-theatres", async (req, res) => {
 });
 
 // get the theatres of a particular owner
-router.get("/get-all-theatres-by-owner/:ownerId", async (req, res) => {
+router.get("/get-all-theatres-by-owner/:ownerId", authMiddleware, ...validateMongoId('ownerId'), async (req, res) => {
   try {
     const allTheatres = await Theatre.find({ owner: req.params.ownerId });
     res.send({

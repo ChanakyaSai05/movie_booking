@@ -1,10 +1,11 @@
 const router = require("express").Router();
-
 const Show = require("../models/showModel");
+const { validateShow, validateMongoId } = require("../middlewares/validationMiddleware");
+const authMiddleware = require("../middlewares/authMiddleware");
 
 // add show
 
-router.post("/add-show", async (req, res) => {
+router.post("/add-show", authMiddleware, ...validateShow, async (req, res) => {
   try {
     const newShow = new Show(req.body);
     await newShow.save();
@@ -21,7 +22,7 @@ router.post("/add-show", async (req, res) => {
   }
 });
 
-router.delete("/delete-show/:showId", async (req, res) => {
+router.delete("/delete-show/:showId", authMiddleware, ...validateMongoId('showId'), async (req, res) => {
   try {
     await Show.findByIdAndDelete(req.params.showId);
     res.send({
@@ -37,7 +38,7 @@ router.delete("/delete-show/:showId", async (req, res) => {
   }
 });
 
-router.put("/update-show", async (req, res) => {
+router.put("/update-show", authMiddleware, ...validateShow, async (req, res) => {
   try {
     await Show.findByIdAndUpdate(req.body.showId, req.body);
     res.send({
@@ -53,7 +54,7 @@ router.put("/update-show", async (req, res) => {
   }
 });
 
-router.get("/get-all-shows-by-theatre/:theatreId", async (req, res) => {
+router.get("/get-all-shows-by-theatre/:theatreId", ...validateMongoId('theatreId'), async (req, res) => {
   try {
     console.log("shows for theatre", req.params.theatreId);
     const shows = await Show.find({ theatre: req.params.theatreId }).populate(
@@ -74,7 +75,7 @@ router.get("/get-all-shows-by-theatre/:theatreId", async (req, res) => {
   }
 });
 
-router.get("/get-all-theatres-by-movie/:movie/:date", async (req, res) => {
+router.get("/get-all-theatres-by-movie/:movie/:date", ...validateMongoId('movie'), async (req, res) => {
   /**
    * it retireves all shows od the specified movie and date from the database
    * it then filters out unique theatres from the shows and organizes shows under each unique theatre
@@ -121,7 +122,7 @@ router.get("/get-all-theatres-by-movie/:movie/:date", async (req, res) => {
   }
 });
 
-router.get("/get-show-by-id/:showId", async (req, res) => {
+router.get("/get-show-by-id/:showId", ...validateMongoId('showId'), async (req, res) => {
   try {
     const show = await Show.findById(req.params.showId)
       .populate("movie")

@@ -11,11 +11,10 @@ const Bookings = () => {
   const [bookings, setBookings] = useState([]);
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.users);
-
   const getData = async () => {
     try {
       dispatch(ShowLoading());
-      const response = await getAllBookings({ userId: user._id });
+      const response = await getAllBookings(user._id);
       if (response.success) {
         setBookings(response.data);
         console.log(response.data);
