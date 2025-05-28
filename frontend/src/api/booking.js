@@ -24,10 +24,10 @@ export const bookShow = async (payload) => {
   }
 };
 
-export const getAllBookings = async (payload) => {
+export const getAllBookings = async (userId) => {
   try {
     const response = await axiosInstance.get(
-      `/api/bookings/get-all-bookings`
+      `/api/bookings/get-all-bookings/${userId}`
     );
     return response.data;
   } catch (error) {
