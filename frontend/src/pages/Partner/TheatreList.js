@@ -17,7 +17,7 @@ function TheatreList() {
   const [selectedTheatre, setSelectedTheatre] = useState(null);
   const [formType, setFormType] = useState("add");
   const [theatres, setTheatres] = useState([]);
-  const dispatch = useDispatch();  const getData = async () => {
+  const dispatch = useDispatch();const getData = async () => {
     dispatch(ShowLoading());
     try {
       const response = await getAllTheatres(user._id);

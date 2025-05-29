@@ -16,6 +16,7 @@ const BookShow = () => {
   const dispatch = useDispatch(); // Redux dispatch function
   const [show, setShow] = useState(); // State for holding show details
   const [selectedSeats, setSelectedSeats] = useState([]); // State for managing selected seats
+  const [isBooking, setIsBooking] = useState(false); // State for booking button loading
   const params = useParams(); // Extracting URL parameters
   const navigate = useNavigate(); // Navigation hook
   // Function to fetch show data by ID
@@ -129,8 +130,9 @@ const BookShow = () => {
   useEffect(() => {
     getData();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-    const onToken = async (token) => {
+  const onToken = async (token) => {
     console.log(token);
+    setIsBooking(true);
     try {
       dispatch(ShowLoading());
       const response = await makePayment(
@@ -151,6 +153,8 @@ const BookShow = () => {
       const extractedErrors = extractErrorFromResponse(err);
       showErrorToasts(extractedErrors);
       dispatch(HideLoading());
+    } finally {
+      setIsBooking(false);
     }
   };
   const book = async (transactionId) => {
@@ -231,9 +235,15 @@ const BookShow = () => {
                     billingAddress
                     amount={selectedSeats.length * show.ticketPrice * 100}
                     stripeKey={process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY}
-                  >
-                    <Button type="primary" className="pay-now-btn" size="large" block>
-                      Pay ₹{selectedSeats.length * show.ticketPrice} Now
+                  >                    <Button 
+                      type="primary" 
+                      className="pay-now-btn" 
+                      size="large" 
+                      block
+                      loading={isBooking}
+                      disabled={isBooking}
+                    >
+                      {isBooking ? "Processing Payment..." : `Pay ₹${selectedSeats.length * show.ticketPrice} Now`}
                     </Button>
                   </StripeCheckout>
                 </div>

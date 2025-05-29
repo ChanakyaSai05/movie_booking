@@ -3,6 +3,7 @@ import { deleteTheatre } from "../../api/theatre";
 import { ShowLoading, HideLoading } from "../../redux/loaderSlice";
 import { useDispatch } from "react-redux";
 import toast from "react-hot-toast";
+import { useState } from "react";
 
 const DeleteTheatreModal = ({
   isDeleteModalOpen,
@@ -12,7 +13,10 @@ const DeleteTheatreModal = ({
   getData,
 }) => {
   const dispatch = useDispatch();
+  const [isDeleting, setIsDeleting] = useState(false);
+  
   const handleOk = async () => {
+    setIsDeleting(true);
     try {
       dispatch(ShowLoading());
       const theatreId = selectedTheatre._id;
@@ -27,10 +31,11 @@ const DeleteTheatreModal = ({
       setSelectedTheatre(null);
       setIsDeleteModalOpen(false);
       dispatch(HideLoading());
-    } catch (err) {
-      dispatch(HideLoading());
+    } catch (err) {      dispatch(HideLoading());
       setIsDeleteModalOpen(false);
       toast.error(err.message);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -46,15 +51,16 @@ const DeleteTheatreModal = ({
       onCancel={handleCancel}
       className="modern-modal delete-modal"
       okText="Delete Theatre"
-      cancelText="Cancel"
-      okButtonProps={{
+      cancelText="Cancel"      okButtonProps={{
         danger: true,
         size: "large",
-        className: "delete-confirm-btn"
+        className: "delete-confirm-btn",
+        loading: isDeleting
       }}
       cancelButtonProps={{
         size: "large",
-        className: "cancel-button"
+        className: "cancel-button",
+        disabled: isDeleting
       }}
     >
       <div className="delete-modal-content">

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Form, Button, Input } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import { LoginUser } from "../api/users";
@@ -6,10 +6,13 @@ import toast from "react-hot-toast";
 import { showErrorToasts, extractErrorFromResponse } from "../utils/errorHandler";
 
 function Login() {
-  const navigate = useNavigate();  const onFinish = async (values) => {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const onFinish = async (values) => {
+    setIsLoading(true);
     try {
-      const response = await LoginUser(values);
-      if (response.success) {
+      const response = await LoginUser(values);      if (response.success) {
         console.log(response);
         toast.success(response.message);
         localStorage.setItem("token", response.data);
@@ -23,10 +26,11 @@ function Login() {
         }
       }
     } catch (err) {
-      console.log(err);
-      // Extract and show detailed error messages
+      console.log(err);// Extract and show detailed error messages
       const extractedErrors = extractErrorFromResponse(err);
       showErrorToasts(extractedErrors);
+    } finally {
+      setIsLoading(false);
     }
   };return (
     <>
@@ -63,13 +67,13 @@ function Login() {
                 placeholder="Enter your password"
                 size="large"
               />
-            </Form.Item>
-            <Form.Item className="d-block">
+            </Form.Item>            <Form.Item className="d-block">
               <Button
                 type="primary"
                 htmlType="submit"
                 block
                 size="large"
+                loading={isLoading}
                 style={{ fontSize: "1rem", fontWeight: "600" }}
               >
                 Sign In

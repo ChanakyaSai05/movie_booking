@@ -8,6 +8,7 @@ import {
   showErrorToasts,
   extractErrorFromResponse,
 } from "../../utils/errorHandler";
+import { useState } from "react";
 
 const TheatreForm = ({
   isModalOpen,
@@ -19,7 +20,10 @@ const TheatreForm = ({
 }) => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.users);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const onFinish = async (values) => {
+    setIsSubmitting(true);
     try {
       dispatch(ShowLoading());
       let response = null;
@@ -43,11 +47,12 @@ const TheatreForm = ({
       }
       setSelectedTheatre(null);
       dispatch(HideLoading());
-    } catch (err) {
-      dispatch(HideLoading());
+    } catch (err) {      dispatch(HideLoading());
       // Extract and show detailed error messages
       const extractedErrors = extractErrorFromResponse(err);
       showErrorToasts(extractedErrors);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -143,18 +148,22 @@ const TheatreForm = ({
               />
             </Form.Item>
           </Col>
-        </Row>
-
-        <div className="form-actions">
+        </Row>        <div className="form-actions">
           <Button
             type="primary"
             htmlType="submit"
             size="large"
             className="submit-button"
+            loading={isSubmitting}
           >
             {formType === "add" ? "Add Theatre" : "Update Theatre"}
           </Button>
-          <Button size="large" onClick={handleCancel} className="cancel-button">
+          <Button 
+            size="large" 
+            onClick={handleCancel} 
+            className="cancel-button"
+            disabled={isSubmitting}
+          >
             Cancel
           </Button>
         </div>

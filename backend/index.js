@@ -32,7 +32,7 @@ app.use(express.json({ limit: '10mb' }));
 
 // Apply rate limiting conditionally based on environment
 if (process.env.NODE_ENV === 'production') {
-  app.use(apiLimiter); // Apply rate limiting to all routes only in production
+  // app.use(apiLimiter); // Apply rate limiting to all routes only in production
 }
 
 // Connect to DB

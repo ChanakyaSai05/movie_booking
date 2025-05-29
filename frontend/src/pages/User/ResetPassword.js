@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Form, Input } from "antd";
 import { ResetPassword } from "../../api/users";
 import toast from "react-hot-toast";
@@ -7,7 +7,11 @@ import { showErrorToasts, extractErrorFromResponse } from "../../utils/errorHand
 
 function Reset() {
   const { email } = useParams();
-  const navigate = useNavigate();  const onFinish = async (values) => {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const onFinish = async (values) => {
+    setIsLoading(true);
     try {
       const response = await ResetPassword(values, email);
       if (response.status === "success") {
@@ -21,10 +25,11 @@ function Reset() {
           showErrorToasts(response.message || "Failed to reset password");
         }
       }
-    } catch (error) {
-      // Extract and show detailed error messages
+    } catch (error) {      // Extract and show detailed error messages
       const extractedErrors = extractErrorFromResponse(error);
       showErrorToasts(extractedErrors);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -61,13 +66,13 @@ function Reset() {
                 size="large"
               />
             </Form.Item>
-            
-            <Form.Item>
+              <Form.Item>
               <Button
                 type="primary"
                 htmlType="submit"
                 size="large"
                 block
+                loading={isLoading}
                 style={{ fontSize: "1rem", fontWeight: "600" }}
               >
                 Reset Password

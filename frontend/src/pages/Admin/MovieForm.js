@@ -6,6 +6,7 @@ import { addMovie, updateMovie } from "../../api/movie";
 import moment from "moment";
 import toast from "react-hot-toast";
 import { showErrorToasts, extractErrorFromResponse } from "../../utils/errorHandler";
+import { useState } from "react";
 
 const MovieForm = ({
   isModalOpen,
@@ -16,12 +17,14 @@ const MovieForm = ({
   getData,
 }) => {
   const dispatch = useDispatch();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (selectedMovie) {
     selectedMovie.releaseDate = moment(selectedMovie.releaseDate).format(
       "YYYY-MM-DD"
     );
   }  const onFinish = async (values) => {
+    setIsSubmitting(true);
     try {
       dispatch(ShowLoading());
       let response = null;
@@ -43,11 +46,12 @@ const MovieForm = ({
       }
       setSelectedMovie(null);
       dispatch(HideLoading());
-    } catch (err) {
-      dispatch(HideLoading());
+    } catch (err) {      dispatch(HideLoading());
       // Extract and show detailed error messages
       const extractedErrors = extractErrorFromResponse(err);
       showErrorToasts(extractedErrors);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -180,6 +184,7 @@ const MovieForm = ({
             htmlType="submit"
             className="submit-button"
             size="large"
+            loading={isSubmitting}
           >
             {formType === "add" ? "Add Movie" : "Update Movie"}
           </Button>
@@ -188,6 +193,7 @@ const MovieForm = ({
             block 
             onClick={handleCancel}
             size="large"
+            disabled={isSubmitting}
           >
             Cancel
           </Button>

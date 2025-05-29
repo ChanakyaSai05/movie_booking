@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Form, Input } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import { ForgetPassword } from "../../api/users";
@@ -6,8 +6,12 @@ import toast from "react-hot-toast";
 import { showErrorToasts, extractErrorFromResponse } from "../../utils/errorHandler";
 
 function Forget() {
-  const navigate = useNavigate();  const onFinish = async (values) => {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const onFinish = async (values) => {
     console.log(values);
+    setIsLoading(true);
     try {
       const response = await ForgetPassword(values);
       if (response.status === "success") {
@@ -22,10 +26,11 @@ function Forget() {
           showErrorToasts(response.message || "Failed to send reset link");
         }
       }
-    } catch (error) {
-      // Extract and show detailed error messages
+    } catch (error) {      // Extract and show detailed error messages
       const extractedErrors = extractErrorFromResponse(error);
       showErrorToasts(extractedErrors);
+    } finally {
+      setIsLoading(false);
     }
   };useEffect(() => {
     if (localStorage.getItem("token")) {
@@ -50,14 +55,13 @@ function Forget() {
                 placeholder="Enter your email address"
                 size="large"
               />
-            </Form.Item>
-
-            <Form.Item>
+            </Form.Item>            <Form.Item>
               <Button
                 type="primary"
                 htmlType="submit"
                 size="large"
                 block
+                loading={isLoading}
                 style={{ fontSize: "1rem", fontWeight: "600" }}
               >
                 Send Reset Link

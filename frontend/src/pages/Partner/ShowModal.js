@@ -47,7 +47,9 @@ const ShowModal = ({
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [shows, setShows] = useState(null);
   const [selectedShow, setSelectedShow] = useState(null);
-  const dispatch = useDispatch();  const getData = useCallback(async () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingShows, setDeletingShows] = useState({});
+  const dispatch = useDispatch();const getData = useCallback(async () => {
     try {
       dispatch(ShowLoading());
       const movieResponse = await getAllMovies();
@@ -75,6 +77,7 @@ const ShowModal = ({
       dispatch(HideLoading());
     }
   }, [dispatch, selectedTheatre._id]);  const onFinish = async (values) => {
+    setIsSubmitting(true);
     try {
       dispatch(ShowLoading());
       let response = null;
@@ -96,19 +99,21 @@ const ShowModal = ({
           showErrorToasts(response.errors);
         } else {
           showErrorToasts(response.message || "Operation failed");
-        }
-      }
+        }      }
       dispatch(HideLoading());
     } catch (err) {
       const extractedErrors = extractErrorFromResponse(err);
       showErrorToasts(extractedErrors);
       dispatch(HideLoading());
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleCancel = () => {
     setIsShowModalOpen(false);
   };  const handleDelete = async (showId) => {
+    setDeletingShows(prev => ({ ...prev, [showId]: true }));
     try {
       dispatch(ShowLoading());
       const response = await deleteShow({ showId: showId });
@@ -118,14 +123,15 @@ const ShowModal = ({
         if (response.errors && Array.isArray(response.errors)) {
           showErrorToasts(response.errors);
         } else {
-          showErrorToasts(response.message || "Failed to delete show");
-        }
+          showErrorToasts(response.message || "Failed to delete show");        }
       }
       dispatch(HideLoading());
     } catch (err) {
       const extractedErrors = extractErrorFromResponse(err);
       showErrorToasts(extractedErrors);
       dispatch(HideLoading());
+    } finally {
+      setDeletingShows(prev => ({ ...prev, [showId]: false }));
     }
   };
   const columns = [
@@ -232,13 +238,13 @@ const ShowModal = ({
               onConfirm={() => handleDelete(data._id)}
               okText="Yes"
               cancelText="No"
-            >
-              <Tooltip title="Delete Show">
+            >              <Tooltip title="Delete Show">
                 <Button
                   type="text"
                   size="small"
                   className="action-btn delete-btn"
                   icon={<DeleteOutlined />}
+                  loading={deletingShows[data._id]}
                 />
               </Tooltip>
             </Popconfirm>
@@ -314,7 +320,10 @@ const ShowModal = ({
             <Form
               layout="vertical"
               className="show-form"
-              initialValues={view === "edit" ? selectedShow : null}
+              initialValues={view === "edit" ? {
+                ...selectedShow,
+                movie: selectedShow?.movie?._id || selectedShow?.movie
+              } : null}
               onFinish={onFinish}
             >
               <Row gutter={[24, 16]}>
@@ -419,13 +428,13 @@ const ShowModal = ({
                 </Col>
               </Row>
               
-              <div className="form-actions">
-                <Button
+              <div className="form-actions">                <Button
                   type="default"
                   size="large"
                   icon={<ArrowLeftOutlined />}
                   onClick={() => setView("table")}
                   className="back-button"
+                  disabled={isSubmitting}
                 >
                   Go Back
                 </Button>
@@ -434,6 +443,7 @@ const ShowModal = ({
                   htmlType="submit"
                   size="large"
                   className="submit-button"
+                  loading={isSubmitting}
                 >
                   {view === "add" ? "Add Show" : "Update Show"}
                 </Button>

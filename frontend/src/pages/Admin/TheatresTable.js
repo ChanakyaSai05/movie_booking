@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 
 function TheatresTable() {
   const [theatres, setTheatres] = useState([]);
+  const [loadingButtons, setLoadingButtons] = useState({});
   const dispatch = useDispatch();
   const getData = async () => {
     try {
@@ -53,6 +54,7 @@ function TheatresTable() {
   }, [dispatch]);
 
   const handleStatusChange = async (theatre) => {
+    setLoadingButtons(prev => ({ ...prev, [theatre._id]: true }));
     try {
       dispatch(ShowLoading());
       const values = {
@@ -70,6 +72,9 @@ function TheatresTable() {
     } catch (err) {
       console.log(err);
       toast.error(err.message);
+      dispatch(HideLoading());
+    } finally {
+      setLoadingButtons(prev => ({ ...prev, [theatre._id]: false }));
     }
   };
   const columns = [
@@ -134,12 +139,12 @@ function TheatresTable() {
       key: "actions",
       render: (text, data) => {
         return (
-          <div className="action-buttons">
-            <Button 
+          <div className="action-buttons">            <Button 
               type={data.isActive ? "default" : "primary"}
               className={data.isActive ? "block-btn" : "approve-btn"}
               onClick={() => handleStatusChange(data)}
               size="small"
+              loading={loadingButtons[data._id]}
             >
               {data.isActive ? "Block" : "Approve"}
             </Button>

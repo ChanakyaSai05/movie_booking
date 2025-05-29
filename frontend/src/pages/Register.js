@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Form, Button, Input, Radio } from "antd";
 import { Link } from "react-router-dom";
 import { RegisterUser } from "../api/users";
@@ -9,7 +9,10 @@ import {
 } from "../utils/errorHandler";
 
 function Register() {
+  const [isLoading, setIsLoading] = useState(false);
+  
   const onFinish = async (values) => {
+    setIsLoading(true);
     try {
       const response = await RegisterUser(values);
       if (response.success) {
@@ -22,10 +25,11 @@ function Register() {
           showErrorToasts(response.message || "Registration failed");
         }
       }
-    } catch (error) {
-      // Extract and show detailed error messages
+    } catch (error) {      // Extract and show detailed error messages
       const extractedErrors = extractErrorFromResponse(error);
       showErrorToasts(extractedErrors);
+    } finally {
+      setIsLoading(false);
     }
   };
   return (
@@ -92,13 +96,13 @@ function Register() {
                   <Radio value={"user"}>No</Radio>
                 </Radio.Group>
               </div>
-            </Form.Item>
-            <Form.Item className="d-block">
+            </Form.Item>            <Form.Item className="d-block">
               <Button
                 type="primary"
                 htmlType="submit"
                 block
                 size="large"
+                loading={isLoading}
                 style={{ fontSize: "1rem", fontWeight: "600" }}
               >
                 Create Account

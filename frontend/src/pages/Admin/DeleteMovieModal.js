@@ -3,6 +3,7 @@ import { deleteMovie } from "../../api/movie";
 import { ShowLoading, HideLoading } from "../../redux/loaderSlice";
 import { useDispatch } from "react-redux";
 import toast from "react-hot-toast";
+import { useState } from "react";
 
 const DeleteMovieModal = ({
   isDeleteModalOpen,
@@ -12,7 +13,10 @@ const DeleteMovieModal = ({
   getData,
 }) => {
   const dispatch = useDispatch();
+  const [isDeleting, setIsDeleting] = useState(false);
+  
   const handleOk = async () => {
+    setIsDeleting(true);
     try {
       dispatch(ShowLoading());
       const movieId = selectedMovie._id;
@@ -26,10 +30,11 @@ const DeleteMovieModal = ({
       setSelectedMovie(null);
       setIsDeleteModalOpen(false);
       dispatch(HideLoading());
-    } catch (err) {
-      dispatch(HideLoading());
+    } catch (err) {      dispatch(HideLoading());
       setIsDeleteModalOpen(false);
       toast.error(err.message);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
