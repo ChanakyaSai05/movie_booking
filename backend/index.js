@@ -19,7 +19,7 @@ app.use(helmet());
 
 // CORS configuration
 const corsOptions = {
-  origin: ["http://localhost:3000", "https://your-production-domain.com"],
+  origin: ["http://localhost:3000", "https://movie-booking-theta.vercel.app"],
   credentials: true,
   optionsSuccessStatus: 200,
 };
