@@ -185,17 +185,17 @@ npm start
 # Database
 MONGO_URI=mongodb://localhost:27017/bookmyshow
 # or for MongoDB Atlas:
-# MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/bookmyshow
+# MONGO_URI=mongodb+srv://<username>:<password>@<cluster-url>/<database-name>
 
-# JWT Secret
-JWT_SECRET=your-super-secret-jwt-key-here
+# JWT Secret (Generate a strong random string)
+JWT_SECRET=<your-secure-jwt-secret-key>
 
-# Stripe Configuration
-STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+# Stripe Configuration (Get from Stripe Dashboard)
+STRIPE_SECRET_KEY=sk_test_<your-stripe-secret-key>
 
-# Email Configuration
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
+# Email Configuration (Use App Password for Gmail)
+EMAIL_USER=<your-email@gmail.com>
+EMAIL_PASS=<your-app-password>
 
 # Server Configuration
 PORT=5000
@@ -213,6 +213,26 @@ REACT_APP_STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key
 # API Base URL
 REACT_APP_API_URL=http://localhost:5000
 ```
+
+## 🔒 Security Considerations
+
+### Environment Variables
+- **Never commit `.env` files to version control**
+- Use strong, unique passwords and JWT secrets
+- For production, use environment variables set by your hosting platform
+- Rotate secrets regularly
+
+### MongoDB Security
+- Use MongoDB Atlas with IP whitelisting
+- Enable MongoDB authentication
+- Use connection strings with restricted user permissions
+- Never expose connection strings in code or documentation
+
+### API Security
+- Rate limiting is implemented to prevent abuse
+- All inputs are validated and sanitized
+- JWT tokens expire after a reasonable time
+- HTTPS should be used in production
 
 ## 📖 Usage
 

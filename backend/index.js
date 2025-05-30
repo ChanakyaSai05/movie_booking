@@ -5,7 +5,7 @@ const helmet = require("helmet");
 const connectDB = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
 const movieRoutes = require("./routes/movieRoutes");
-const theatreRoutes= require("./routes/theatreRoutes");
+const theatreRoutes = require("./routes/theatreRoutes");
 const showRoutes = require("./routes/showRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
 const errorHandler = require("./middlewares/errorHandler");
@@ -19,19 +19,17 @@ app.use(helmet());
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://yourdomain.com'] // Replace with your production domain
-    : ['http://localhost:3000'],
+  origin: ["http://localhost:3000", "https://your-production-domain.com"],
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
 
 // Other middleware
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: "10mb" }));
 
 // Apply rate limiting conditionally based on environment
-if (process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV === "production") {
   // app.use(apiLimiter); // Apply rate limiting to all routes only in production
 }
 
