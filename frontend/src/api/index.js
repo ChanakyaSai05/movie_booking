@@ -6,7 +6,7 @@ export const axiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  baseURL: import.meta.env.REACT_APP_BASE_URL || "http://localhost:5000/api",
+  baseURL: process.env.REACT_APP_BASE_URL || "http://localhost:5000/api",
 });
 
 axiosInstance.interceptors.request.use(
